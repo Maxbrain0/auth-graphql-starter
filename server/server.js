@@ -3,6 +3,9 @@ const models = require('./models');
 const expressGraphQL = require('express-graphql');
 const mongoose = require('mongoose');
 const session = require('express-session');
+const expressPlayground = require('graphql-playground-middleware-express')
+  .default;
+
 const passport = require('passport');
 const passportConfig = require('./services/auth');
 const MongoStore = require('connect-mongo')(session);
@@ -12,7 +15,9 @@ const schema = require('./schema/schema');
 const app = express();
 
 // Replace with your mongoLab URI
-const MONGO_URI = 'mongodb://user:secret@localhost:27017/authDemo';
+// const MONGO_URI = 'mongodb://admin:secret@localhost:27017/admin';
+const MONGO_URI =
+  'mongodb+srv://admin:3Fj5YDLRMn6N2bm@cluster0-llrnf.mongodb.net/test?retryWrites=true&w=majority';
 
 // Mongoose's built in promise library is deprecated, replace it with ES2015 Promise
 mongoose.Promise = global.Promise;
@@ -20,9 +25,12 @@ mongoose.Promise = global.Promise;
 // Connect to the mongoDB instance and log a message
 // on success or failure
 mongoose.connect(MONGO_URI);
-mongoose.connection
+
+const db = mongoose.connection
   .once('open', () => console.log('Connected to MongoDB instance.'))
-  .on('error', error => console.log('Error connecting to MongoLab:', error));
+  .on('error', error =>
+    console.log('Error connecting to MongoDB instance:', error)
+  );
 
 // Configures express to use sessions.  This places an encrypted identifier
 // on the users cookie.  When a user makes a request, this middleware examines
@@ -35,7 +43,7 @@ app.use(
     saveUninitialized: true,
     secret: 'aaabbbccc',
     store: new MongoStore({
-      url: MONGO_URI,
+      mongooseConnection: db,
       autoReconnect: true
     })
   })
@@ -56,6 +64,8 @@ app.use(
     graphiql: true
   })
 );
+
+app.get('/playground', expressPlayground({ endpoint: '/graphql' }));
 
 // Webpack runs as a middleware.  If any request comes in for the root route ('/')
 // Webpack will respond with the output of the webpack process: an HTML file and
