@@ -24,9 +24,13 @@ mongoose.Promise = global.Promise;
 
 // Connect to the mongoDB instance and log a message
 // on success or failure
-mongoose.connect(MONGO_URI);
+const connection = mongoose.createConnection(MONGO_URI, {
+  dbName: 'gqlauth',
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
-const db = mongoose.connection
+connection
   .once('open', () => console.log('Connected to MongoDB instance.'))
   .on('error', error =>
     console.log('Error connecting to MongoDB instance:', error)
@@ -43,7 +47,7 @@ app.use(
     saveUninitialized: true,
     secret: 'aaabbbccc',
     store: new MongoStore({
-      mongooseConnection: db,
+      mongooseConnection: connection,
       autoReconnect: true
     })
   })
